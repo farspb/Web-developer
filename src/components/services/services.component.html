@@ -1,0 +1,22 @@
+
+<section id="services" class="py-20 sm:py-24 bg-slate-800">
+  <div class="container mx-auto px-6">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl sm:text-4xl font-bold text-white">خدمات ما</h2>
+      <p class="mt-4 text-lg text-slate-400">راهکارهای جامع برای رشد کسب و کار دیجیتال شما</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      @for (service of services; track service.title) {
+        <div class="bg-slate-900 p-8 rounded-xl shadow-lg border border-slate-700 transform hover:-translate-y-2 transition-transform duration-300">
+          <div class="flex items-center justify-center h-16 w-16 rounded-full bg-cyan-900/50 mb-6">
+            <svg class="w-8 h-8 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="service.icon" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-3">{{ service.title }}</h3>
+          <p class="text-slate-400 leading-relaxed">{{ service.description }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
