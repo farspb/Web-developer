@@ -1,18 +1,26 @@
 
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
+import { LucideAngularModule, Mail, Lock, User, Loader2, CheckCircle } from 'lucide-angular';
 
-type AuthMode = 'login' | 'register';
-type Status = 'idle' | 'loading' | 'success' | 'error';
+type AuthMode = 'login' | 'register' | 'forgot-password';
+type Status = 'idle' | 'loading' | 'success' | 'error' | 'forgot-password-success';
 
 @Component({
   selector: 'app-auth-section',
   standalone: true,
+  imports: [LucideAngularModule],
   templateUrl: './auth-section.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AuthSectionComponent {
   authService = inject(AuthService);
+
+  readonly Mail = Mail;
+  readonly Lock = Lock;
+  readonly User = User;
+  readonly Loader2 = Loader2;
+  readonly CheckCircle = CheckCircle;
 
   mode = signal<AuthMode>('register');
   status = signal<Status>('idle');
@@ -32,6 +40,8 @@ export class AuthSectionComponent {
   isFormValid(): boolean {
     if (this.mode() === 'register') {
       return this.name().trim() !== '' && this.email().includes('@') && this.password().length >= 6;
+    } else if (this.mode() === 'forgot-password') {
+      return this.email().includes('@');
     }
     return this.email().includes('@') && this.password().length >= 6;
   }
@@ -60,14 +70,18 @@ export class AuthSectionComponent {
 
     try {
       if (this.mode() === 'register') {
-        await this.authService.registerWithEmail(this.name(), this.email());
-      } else {
-        await this.authService.loginWithEmail(this.email());
+        await this.authService.registerWithEmail(this.name(), this.email(), this.password());
+        this.status.set('success');
+      } else if (this.mode() === 'login') {
+        await this.authService.loginWithEmail(this.email(), this.password());
+        this.status.set('success');
+      } else if (this.mode() === 'forgot-password') {
+        await this.authService.resetPasswordForEmail(this.email());
+        this.status.set('forgot-password-success');
       }
-      this.status.set('success');
-    } catch (e) {
+    } catch (e: any) {
       this.status.set('error');
-      this.errorMessage.set('عملیات با خطا مواجه شد. لطفا دوباره تلاش کنید.');
+      this.errorMessage.set(e.message || 'عملیات با خطا مواجه شد. لطفا دوباره تلاش کنید.');
     }
   }
 

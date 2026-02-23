@@ -1,5 +1,6 @@
 
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { SupabaseService } from './supabase.service';
 
 export interface User {
   name: string;
@@ -10,37 +11,141 @@ export interface User {
   providedIn: 'root'
 })
 export class AuthService {
+  private supabaseService = inject(SupabaseService);
   currentUser = signal<User | null>(null);
 
-  // Simulate a network delay
-  private networkDelay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  constructor() {
+    this.initSession();
   }
 
-  async loginWithGoogle(): Promise<User> {
-    await this.networkDelay(800);
-    const user: User = { name: 'کاربر گوگل', email: 'user@gmail.com' };
-    this.currentUser.set(user);
-    return user;
+  private async initSession() {
+    try {
+      const { data: { session }, error } = await this.supabaseService.supabase.auth.getSession();
+      if (error) {
+        console.error('Supabase session error:', error.message);
+      }
+      if (session?.user) {
+        this.currentUser.set({
+          name: session.user.user_metadata?.['name'] || 'کاربر',
+          email: session.user.email || ''
+        });
+      }
+
+      this.supabaseService.supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          this.currentUser.set({
+            name: session.user.user_metadata?.['name'] || 'کاربر',
+            email: session.user.email || ''
+          });
+        } else {
+          this.currentUser.set(null);
+        }
+      });
+    } catch (err: any) {
+      console.error('Failed to initialize Supabase session. Check your API keys.', err);
+    }
   }
 
-  async registerWithEmail(name: string, email: string): Promise<User> {
-    await this.networkDelay(1200);
-    // In a real app, you would check for existing users
-    const newUser: User = { name, email };
-    this.currentUser.set(newUser);
-    return newUser;
+  async loginWithGoogle(): Promise<void> {
+    const { error } = await this.supabaseService.supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+    if (error) throw error;
   }
 
-  async loginWithEmail(email: string): Promise<User> {
-    await this.networkDelay(1000);
-    // In a real app, you would verify credentials
-    const user: User = { name: 'کاربر ثبت شده', email };
-    this.currentUser.set(user);
-    return user;
+  async registerWithEmail(name: string, email: string, password?: string): Promise<void> {
+    if (!password) {
+      throw new Error('رمز عبور برای ثبت‌نام الزامی است.');
+    }
+    
+    try {
+      const { data, error } = await this.supabaseService.supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name
+          }
+        }
+      });
+      
+      if (error) {
+        if (error.message.includes('User already registered')) {
+          throw new Error('این ایمیل قبلاً ثبت شده است.');
+        }
+        if (error.message.includes('JWT')) {
+          throw new Error('کلید API سوپابیس (Anon Key) نامعتبر است. لطفا کلید صحیح را جایگزین کنید.');
+        }
+        throw new Error(error.message);
+      }
+
+      if (data.user && !data.session) {
+        throw new Error('ثبت‌نام با موفقیت انجام شد. لطفا برای ورود، ایمیل خود را تایید کنید (یا تایید ایمیل را در تنظیمات Supabase غیرفعال کنید).');
+      }
+    } catch (err: any) {
+      if (err.message && err.message.includes('JWT')) {
+        throw new Error('کلید API سوپابیس (Anon Key) نامعتبر است. لطفا کلید صحیح را جایگزین کنید.');
+      }
+      throw err;
+    }
   }
 
-  logout(): void {
+  async loginWithEmail(email: string, password?: string): Promise<void> {
+    if (!password) {
+      throw new Error('رمز عبور برای ورود الزامی است.');
+    }
+    
+    try {
+      const { error } = await this.supabaseService.supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('ایمیل یا رمز عبور اشتباه است.');
+        }
+        if (error.message.includes('Email not confirmed')) {
+          throw new Error('لطفا ابتدا ایمیل خود را تایید کنید.');
+        }
+        if (error.message.includes('JWT')) {
+          throw new Error('کلید API سوپابیس (Anon Key) نامعتبر است. لطفا کلید صحیح را جایگزین کنید.');
+        }
+        throw new Error(error.message);
+      }
+    } catch (err: any) {
+      if (err.message && err.message.includes('JWT')) {
+        throw new Error('کلید API سوپابیس (Anon Key) نامعتبر است. لطفا کلید صحیح را جایگزین کنید.');
+      }
+      throw err;
+    }
+  }
+
+  async resetPasswordForEmail(email: string): Promise<void> {
+    if (!email) {
+      throw new Error('ایمیل الزامی است.');
+    }
+    try {
+      const { error } = await this.supabaseService.supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      if (error) {
+        if (error.message.includes('JWT')) {
+          throw new Error('کلید API سوپابیس (Anon Key) نامعتبر است. لطفا کلید صحیح را جایگزین کنید.');
+        }
+        throw new Error(error.message);
+      }
+    } catch (err: any) {
+      if (err.message && err.message.includes('JWT')) {
+        throw new Error('کلید API سوپابیس (Anon Key) نامعتبر است. لطفا کلید صحیح را جایگزین کنید.');
+      }
+      throw err;
+    }
+  }
+
+  async logout(): Promise<void> {
+    const { error } = await this.supabaseService.supabase.auth.signOut();
+    if (error) throw error;
     this.currentUser.set(null);
   }
 }

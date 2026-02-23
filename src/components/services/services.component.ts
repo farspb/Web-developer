@@ -1,8 +1,9 @@
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { LucideAngularModule, Monitor, Code2, Search } from 'lucide-angular';
 
 interface Service {
-  icon: string;
+  icon: any;
   title: string;
   description: string;
 }
@@ -10,24 +11,28 @@ interface Service {
 @Component({
   selector: 'app-services',
   standalone: true,
-  imports: [],
+  imports: [LucideAngularModule],
   templateUrl: './services.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ServicesComponent {
+  readonly Monitor = Monitor;
+  readonly Code2 = Code2;
+  readonly Search = Search;
+
   services: Service[] = [
     {
-      icon: 'M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.25a.75.75 0 01-.75-.75v-7.5a.75.75 0 01.75-.75h3.75a.75.75 0 01.75.75v7.5a.75.75 0 01-.75.75h-3.75zM13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.25a.75.75 0 01-.75-.75v-7.5a.75.75 0 01.75-.75h3.75a.75.75 0 01.75.75v7.5a.75.75 0 01-.75.75h-3.75zM13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.25a.75.75 0 01-.75-.75v-7.5a.75.75 0 01.75-.75h3.75a.75.75 0 01.75.75v7.5a.75.75 0 01-.75.75h-3.75z',
+      icon: Monitor,
       title: 'طراحی وب‌سایت مدرن',
       description: 'طراحی رابط کاربری (UI) و تجربه کاربری (UX) جذاب و واکنش‌گرا برای تمامی دستگاه‌ها.',
     },
     {
-      icon: 'M17.25 6.75c0 3.296-2.23 6-5.25 6S6.75 10.046 6.75 6.75c0-3.296 2.23-6 5.25-6s5.25 2.704 5.25 6zM6.75 18.75c0-3.296 2.23-6 5.25-6s5.25 2.704 5.25 6',
+      icon: Code2,
       title: 'برنامه‌نویسی اختصاصی',
       description: 'توسعه نرم‌افزارهای تحت وب و راهکارهای سفارشی با استفاده از جدیدترین تکنولوژی‌ها.',
     },
     {
-      icon: 'M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75',
+      icon: Search,
       title: 'بهینه‌سازی و سئو',
       description: 'بهبود رتبه سایت شما در موتورهای جستجو و افزایش بازدیدکنندگان ارگانیک.',
     },
