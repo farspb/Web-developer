@@ -1,10 +1,12 @@
 
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { HeaderComponent } from './components/header/header.component';
 import { HeroComponent } from './components/hero/hero.component';
 import { ServicesComponent } from './components/services/services.component';
 import { AuthSectionComponent } from './components/auth-section/auth-section.component';
 import { FooterComponent } from './components/footer/footer.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -15,7 +17,10 @@ import { FooterComponent } from './components/footer/footer.component';
     HeroComponent,
     ServicesComponent,
     AuthSectionComponent,
-    FooterComponent
+    FooterComponent,
+    DashboardComponent
   ]
 })
-export class AppComponent {}
+export class AppComponent {
+  authService = inject(AuthService);
+}

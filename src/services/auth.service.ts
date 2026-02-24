@@ -2,9 +2,17 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 
-export interface User {
+export interface UserProfile {
+  id: string;
   name: string;
   email: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  bio?: string;
+  avatar_url?: string;
+  tron_wallet?: string;
 }
 
 @Injectable({
@@ -12,10 +20,38 @@ export interface User {
 })
 export class AuthService {
   private supabaseService = inject(SupabaseService);
-  currentUser = signal<User | null>(null);
+  currentUser = signal<UserProfile | null>(null);
 
   constructor() {
     this.initSession();
+  }
+
+  private async loadProfile(userId: string, email: string) {
+    const { data } = await this.supabaseService.supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+      
+    if (data) {
+      this.currentUser.set({ ...data, email });
+    } else {
+      this.currentUser.set({ id: userId, name: 'کاربر', email });
+    }
+  }
+
+  async updateProfile(updates: Partial<UserProfile>): Promise<void> {
+    const user = this.currentUser();
+    if (!user?.id) throw new Error('کاربر وارد نشده است');
+    
+    const { error } = await this.supabaseService.supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', user.id);
+      
+    if (error) throw new Error(error.message);
+    
+    this.currentUser.set({ ...user, ...updates });
   }
 
   private async initSession() {
@@ -25,18 +61,12 @@ export class AuthService {
         console.error('Supabase session error:', error.message);
       }
       if (session?.user) {
-        this.currentUser.set({
-          name: session.user.user_metadata?.['name'] || 'کاربر',
-          email: session.user.email || ''
-        });
+        await this.loadProfile(session.user.id, session.user.email || '');
       }
 
-      this.supabaseService.supabase.auth.onAuthStateChange((_event, session) => {
+      this.supabaseService.supabase.auth.onAuthStateChange(async (_event, session) => {
         if (session?.user) {
-          this.currentUser.set({
-            name: session.user.user_metadata?.['name'] || 'کاربر',
-            email: session.user.email || ''
-          });
+          await this.loadProfile(session.user.id, session.user.email || '');
         } else {
           this.currentUser.set(null);
         }

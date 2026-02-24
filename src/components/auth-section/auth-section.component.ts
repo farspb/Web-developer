@@ -46,18 +46,6 @@ export class AuthSectionComponent {
     return this.email().includes('@') && this.password().length >= 6;
   }
   
-  async handleGoogleSignin() {
-    this.status.set('loading');
-    this.errorMessage.set(null);
-    try {
-      await this.authService.loginWithGoogle();
-      this.status.set('success');
-    } catch (e) {
-      this.status.set('error');
-      this.errorMessage.set('ورود با گوگل با مشکل مواجه شد.');
-    }
-  }
-  
   async handleSubmit(event: Event) {
     event.preventDefault();
     if (!this.isFormValid()) {
